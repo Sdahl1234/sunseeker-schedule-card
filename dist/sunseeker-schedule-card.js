@@ -179,6 +179,13 @@ class SunseekerScheduleCard extends HTMLElement {
 
     this.shadowRoot.innerHTML = `
       <style>
+        ha-card .card-header,
+        .card-header {
+          text-align: center;
+          font-size: 1.3em;
+          font-weight: bold;
+          margin-bottom: 12px;
+        }
         ha-card .card-header {
           text-align: center;
         }
@@ -291,7 +298,8 @@ class SunseekerScheduleCard extends HTMLElement {
           display: none;
         }
       </style>
-      <ha-card header="${header}">
+      <ha-card>
+        ${header ? `<div class="card-header">${header}</div>` : ""}
         <div style="padding: 16px;">
           <div class="bool-buttons">
             <button
@@ -434,12 +442,10 @@ class SunseekerScheduleCardEditor extends HTMLElement {
 
   render() {
     if (!this._hass) return;
-  // Ensure ha-entity-picker is loaded
-  if (!customElements.get("ha-entity-picker")) {
-    const el = document.createElement("ha-entity-picker");
-    document.body.appendChild(el);
-    document.body.removeChild(el);
-  }
+
+    if (!customElements.get("ha-entity-picker")) {
+      customElements.get("hui-entities-card").getConfigElement();
+    }
 
   this.innerHTML = `
     <div>
