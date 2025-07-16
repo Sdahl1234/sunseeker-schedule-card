@@ -11,4 +11,5 @@ Custom Lovelace cards for Sunseeker integrations.
 ```yaml
 type: 'custom:sunseeker-schedule-card'
 ```
-<img width="493" height="757" alt="image" src="https://github.com/user-attachments/assets/c4ad0b50-8370-4003-83ee-1a5aac9c8844" />
+<img width="510" height="792" alt="image" src="https://github.com/user-attachments/assets/2fa0d209-f491-46c6-b5da-385e2a443b37" />
+
