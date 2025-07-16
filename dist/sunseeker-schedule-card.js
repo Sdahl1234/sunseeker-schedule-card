@@ -423,11 +423,15 @@ class SunseekerScheduleCardEditor extends HTMLElement {
   setConfig(config) {
     this._config = config;
     this.render();
+    this._initialized = true;
   }
 
   set hass(hass) {
     this._hass = hass;
-    this.render();
+    if (this._initialized) {
+        this._updateDom(); // Only update DOM, not full render
+    }
+    //this.render();
   }
 
   get _entity() {
@@ -477,12 +481,14 @@ class SunseekerScheduleCardEditor extends HTMLElement {
     picker.value = this._entity;
     picker.setAttribute("data-config-value", "entity");
     picker.setAttribute("domain-filter", "sensor");
-    picker.addEventListener("value-changed", (ev) => {
+    picker.setAttribute("include-domains", "sensor");
+    picker.includeDomains = ["sensor"];
+        picker.addEventListener("value-changed", (ev) => {
       this._config = {
         ...this._config,
         entity: ev.detail.value,
       };
-      this.render();
+      // this.render();
       this.dispatchEvent(
         new CustomEvent("config-changed", {
           detail: { config: this._config },
