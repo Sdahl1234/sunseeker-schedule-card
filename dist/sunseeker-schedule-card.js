@@ -27,6 +27,7 @@ class SunseekerScheduleCard extends HTMLElement {
   setConfig(config) {
     this.config = config;
     this._entity = config.entity;
+    this._collapsedHeader = config.collapsed_header ?? false;
     this._initCollapseState();
     this._render();
   }
@@ -175,7 +176,13 @@ class SunseekerScheduleCard extends HTMLElement {
     const schedule = this._editMode ? this._localSchedule : this._schedule;
     const locations = schedule?.locations || [];
     const disabled = this._editMode ? "" : "disabled";
+    const showHeader = this.config?.show_header !== false;
     const header = this.config?.show_header === false ? "" : (this.config?.header || this._t("header"));
+
+    // Add collapsed state for header if not set
+    if (this._collapsedHeader === undefined) {
+      this._collapsedHeader = false;
+    }
 
     this.shadowRoot.innerHTML = `
       <style>
@@ -184,10 +191,18 @@ class SunseekerScheduleCard extends HTMLElement {
           text-align: center;
           font-size: 1.3em;
           font-weight: bold;
-          margin-bottom: 12px;
+          margin-bottom: 4px;
+          cursor: pointer;
+          user-select: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
-        ha-card .card-header {
-          text-align: center;
+        .collapse-arrow {
+          display: inline-block;
+          margin-left: 6px;
+          font-size: 0.9em;
+          transition: transform 0.2s;
         }
         .bool-buttons {
           display: flex;
@@ -288,109 +303,121 @@ class SunseekerScheduleCard extends HTMLElement {
           margin-top: 16px;
           text-align: center;
         }
-        .collapse-arrow {
-          display: inline-block;
-          margin-left: 6px;
-          font-size: 0.9em;
-          transition: transform 0.2s;
-        }
         .collapsed > .entry-content {
           display: none;
         }
       </style>
       <ha-card>
-        ${header ? `<div class="card-header">${header}</div>` : ""}
-        <div style="padding: 16px;">
-          <div class="bool-buttons">
-            <button
-              type="button"
-              class="bool-btn${schedule.recommended_time_work ? " selected" : ""}"
-              ${disabled}
-              id="recommended-btn"
-            >${this._t("recommended_time_work")}</button>
-            <button
-              type="button"
-              class="bool-btn${schedule.user_defined ? " selected" : ""}"
-              ${disabled}
-              id="userdefined-btn"
-            >${this._t("user_defined")}</button>
-            <button
-              type="button"
-              class="bool-btn${schedule.pause ? " selected" : ""}"
-              ${disabled}
-              id="pause-btn"
-            >${this._t("pause")}</button>
+        ${showHeader ? `
+          <div class="card-header" id="main-header">
+            ${header}
+            <span class="collapse-arrow" style="transform: rotate(${this._collapsedHeader ? 0 : 90}deg);">&#9654;</span>
           </div>
-          ${days.map(
-            (day) => `
-              <div class="day-block${this._collapsedDays[day] ? " collapsed" : ""}">
-                <span class="day-label" data-day="${day}">
-                  ${this._t("days", day)}
-                  <span class="collapse-arrow" style="transform: rotate(${this._collapsedDays[day] ? 0 : 90}deg);">&#9654;</span>
-                </span>
-                <div class="entry-content">
-                  ${[0, 1].map(idx => `
-                    <div>
-                      <span class="entry-headline" data-day="${day}" data-idx="${idx}">
-                        ${this._t("entry")} ${idx + 1}
-                        <span class="collapse-arrow" style="transform: rotate(${this._collapsedEntries[day][idx] ? 0 : 90}deg);">&#9654;</span>
-                      </span>
-                      <div class="entry-details" style="display:${this._collapsedEntries[day][idx] ? "none" : "block"}">
-                        <div class="entry-row">
-                          <label>
-                            <input
-                              type="checkbox"
-                              ${schedule[day]?.[idx]?.enabled ? "checked" : ""}
-                              ${disabled}
-                              onchange="this.getRootNode().host._handleInput('${day}', ${idx}, 'enabled', event)"
-                            /> ${this._t("enabled")}
-                          </label>
-                          <input
-                            type="time"
-                            value="${schedule[day]?.[idx]?.starttime || "00:00"}"
-                            ${disabled}
-                            oninput="this.getRootNode().host._handleInput('${day}', ${idx}, 'starttime', event)"
-                          />
-                          <input
-                            type="time"
-                            value="${schedule[day]?.[idx]?.endtime || "00:00"}"
-                            ${disabled}
-                            oninput="this.getRootNode().host._handleInput('${day}', ${idx}, 'endtime', event)"
-                          />
-                        </div>
-                        <div class="location-buttons">
-                          ${locations.map(
-                            loc => `
-                              <button
-                                type="button"
-                                class="location-btn${schedule[day]?.[idx]?.locations?.includes(loc) ? " selected" : ""}"
+        ` : ""}
+        <div id="card-body" style="${this._collapsedHeader ? "display:none;" : ""}">
+          <div style="padding: 16px;">
+            <div class="bool-buttons">
+              <button
+                type="button"
+                class="bool-btn${schedule.recommended_time_work ? " selected" : ""}"
+                ${disabled}
+                id="recommended-btn"
+              >${this._t("recommended_time_work")}</button>
+              <button
+                type="button"
+                class="bool-btn${schedule.user_defined ? " selected" : ""}"
+                ${disabled}
+                id="userdefined-btn"
+              >${this._t("user_defined")}</button>
+              <button
+                type="button"
+                class="bool-btn${schedule.pause ? " selected" : ""}"
+                ${disabled}
+                id="pause-btn"
+              >${this._t("pause")}</button>
+            </div>
+            ${days.map(
+      (day) => `
+                <div class="day-block${this._collapsedDays[day] ? " collapsed" : ""}">
+                  <span class="day-label" data-day="${day}">
+                    ${this._t("days", day)}
+                    <span class="collapse-arrow" style="transform: rotate(${this._collapsedDays[day] ? 0 : 90}deg);">&#9654;</span>
+                  </span>
+                  <div class="entry-content">
+                    ${[0, 1].map(idx => `
+                      <div>
+                        <span class="entry-headline" data-day="${day}" data-idx="${idx}">
+                          ${this._t("entry")} ${idx + 1}
+                          <span class="collapse-arrow" style="transform: rotate(${this._collapsedEntries[day][idx] ? 0 : 90}deg);">&#9654;</span>
+                        </span>
+                        <div class="entry-details" style="display:${this._collapsedEntries[day][idx] ? "none" : "block"}">
+                          <div class="entry-row">
+                            <label>
+                              <input
+                                type="checkbox"
+                                ${schedule[day]?.[idx]?.enabled ? "checked" : ""}
                                 ${disabled}
-                                onclick="this.getRootNode().host._toggleLocation('${day}', ${idx}, '${loc}')"
-                              >${loc}</button>
-                            `
-                          ).join("")}
+                                onchange="this.getRootNode().host._handleInput('${day}', ${idx}, 'enabled', event)"
+                              /> ${this._t("enabled")}
+                            </label>
+                            <input
+                              type="time"
+                              value="${schedule[day]?.[idx]?.starttime || "00:00"}"
+                              ${disabled}
+                              oninput="this.getRootNode().host._handleInput('${day}', ${idx}, 'starttime', event)"
+                            />
+                            <input
+                              type="time"
+                              value="${schedule[day]?.[idx]?.endtime || "00:00"}"
+                              ${disabled}
+                              oninput="this.getRootNode().host._handleInput('${day}', ${idx}, 'endtime', event)"
+                            />
+                          </div>
+                          <div class="location-buttons">
+                            ${locations.map(
+        loc => `
+                                <button
+                                  type="button"
+                                  class="location-btn${schedule[day]?.[idx]?.locations?.includes(loc) ? " selected" : ""}"
+                                  ${disabled}
+                                  onclick="this.getRootNode().host._toggleLocation('${day}', ${idx}, '${loc}')"
+                                >${loc}</button>
+                              `
+      ).join("")}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  `).join("")}
+                    `).join("")}
+                  </div>
                 </div>
-              </div>
-            `
-          ).join("")}
-          <div class="button-row">
-            ${this._editMode
-              ? `
-                <button class="submit-btn" type="button">${this._t("submit")}</button>
-                <button class="cancel-btn" type="button">${this._t("cancel")}</button>
               `
-              : `
-                <button class="edit-btn" type="button">${this._t("edit")}</button>
-              `
-            }
+    ).join("")}
+            <div class="button-row">
+              ${this._editMode
+        ? `
+                  <button class="submit-btn" type="button">${this._t("submit")}</button>
+                  <button class="cancel-btn" type="button">${this._t("cancel")}</button>
+                `
+        : `
+                  <button class="edit-btn" type="button">${this._t("edit")}</button>
+                `
+      }
+            </div>
           </div>
         </div>
       </ha-card>
     `;
+
+    // Attach collapse handler for header
+    if (showHeader) {
+      const headerEl = this.shadowRoot.getElementById("main-header");
+      if (headerEl) {
+        headerEl.onclick = () => {
+          this._collapsedHeader = !this._collapsedHeader;
+          this._render();
+        };
+      }
+    }
 
     // Attach event handlers for boolean buttons
     if (this._editMode) {
@@ -417,7 +444,6 @@ class SunseekerScheduleCard extends HTMLElement {
     }
   }
 }
-
 // Minimal GUI editor for Lovelace
 class SunseekerScheduleCardEditor extends HTMLElement {
   setConfig(config) {
@@ -428,10 +454,10 @@ class SunseekerScheduleCardEditor extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
-    if (this._initialized) {
-        this._updateDom(); // Only update DOM, not full render
-    }
-    //this.render();
+      if (this._initialized) {
+          this._updateDom(); // Only update DOM, not full render
+      }
+    this.render();
   }
 
   get _entity() {
@@ -452,28 +478,38 @@ class SunseekerScheduleCardEditor extends HTMLElement {
     }
 
   this.innerHTML = `
-    <div>
-      <label>Entity</label>
-      <span id="picker-container"></span>
-      <br />
-      <label>Header</label>
-      <input
-        type="text"
-        value="${this._header}"
-        data-config-value="header"
-        placeholder="Header text"
-      />
-      <br />
-      <label>
+      <div>
+        <label>Entity</label>
+        <span id="picker-container"></span>
+        <br />
+        <label>Header</label>
         <input
-          type="checkbox"
-          ${this._showHeader ? "checked" : ""}
-          data-config-value="show_header"
+          type="text"
+          value="${this._header}"
+          data-config-value="header"
+          placeholder="Header text"
         />
-        Show header
-      </label>
-    </div>
-  `;
+        <br />
+        <label>
+          <input
+            type="checkbox"
+            ${this._showHeader ? "checked" : ""}
+            data-config-value="show_header"
+          />
+          Show header
+        </label>
+        <br />
+        <label>
+          <input
+            type="checkbox"
+            ${this._config?.collapsed_header ? "checked" : ""}
+            data-config-value="collapsed_header"
+          />
+          Header collapsed by default
+        </label>
+      </div>
+    `;
+
 
     // Dynamically create and insert ha-entity-picker
     const picker = document.createElement("ha-entity-picker");
