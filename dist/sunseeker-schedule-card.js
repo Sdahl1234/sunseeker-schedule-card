@@ -507,6 +507,9 @@ class SunseekerScheduleCardEditor extends HTMLElement {
           />
           Header collapsed by default
         </label>
+        <br />
+        <br />
+        Version 1.0.4
       </div>
     `;
 
