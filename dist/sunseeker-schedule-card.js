@@ -9,6 +9,8 @@ class SunseekerScheduleCard extends HTMLElement {
     this._collapsedDays = {};
     this._collapsedEntries = {};
     this._initCollapseState();
+  this._lastState = null;
+  this._lastSchedule = null;
   }
 
   static getConfigElement() {
@@ -29,7 +31,7 @@ class SunseekerScheduleCard extends HTMLElement {
     this._entity = config.entity;
     this._collapsedHeader = config.collapsed_header ?? false;
     this._initCollapseState();
-    this._render();
+    this._updateDom();
   }
 
   set hass(hass) {
@@ -37,10 +39,16 @@ class SunseekerScheduleCard extends HTMLElement {
     if (!this._entity) return;
     if (!this._editMode) {
       const stateObj = this._hass.states[this._entity];
-      if (stateObj && stateObj.attributes.schedule) {
-        this._schedule = stateObj.attributes.schedule;
+      const schedule = stateObj?.attributes?.schedule;
+      // Only update if state or schedule changed
+      const stateChanged = stateObj !== this._lastState;
+      const scheduleChanged = JSON.stringify(schedule) !== JSON.stringify(this._lastSchedule);
+      if (stateChanged || scheduleChanged) {
+        this._schedule = schedule;
         this._initCollapseState();
-        this._render();
+        this._updateDom();
+        this._lastState = stateObj;
+        this._lastSchedule = schedule ? JSON.parse(JSON.stringify(schedule)) : null;
       }
     }
   }
@@ -73,7 +81,7 @@ class SunseekerScheduleCard extends HTMLElement {
     this._editMode = true;
     this._localSchedule = JSON.parse(JSON.stringify(this._schedule));
     this._initCollapseState();
-    this._render();
+    this._updateDom();
   }
 
   _cancelEdit() {
@@ -86,7 +94,7 @@ class SunseekerScheduleCard extends HTMLElement {
       }
     }
     this._initCollapseState();
-    this._render();
+    this._updateDom();
   }
 
   _handleInput(day, idx, field, e) {
@@ -97,7 +105,7 @@ class SunseekerScheduleCard extends HTMLElement {
     } else {
       this._localSchedule[day][idx][field] = e.target.value;
     }
-    this._render();
+    this._updateDom();
   }
 
   _toggleBoolean(key) {
@@ -109,7 +117,7 @@ class SunseekerScheduleCard extends HTMLElement {
       this._localSchedule.recommended_time_work = key === "recommended_time_work";
       this._localSchedule.user_defined = key === "user_defined";
     }
-    this._render();
+    this._updateDom();
   }
 
   _toggleLocation(day, idx, loc) {
@@ -122,17 +130,17 @@ class SunseekerScheduleCard extends HTMLElement {
     } else {
       entry.locations.splice(i, 1);
     }
-    this._render();
+    this._updateDom();
   }
 
   _toggleDayCollapse(day) {
     this._collapsedDays[day] = !this._collapsedDays[day];
-    this._render();
+    this._updateDom();
   }
 
   _toggleEntryCollapse(day, idx) {
     this._collapsedEntries[day][idx] = !this._collapsedEntries[day][idx];
-    this._render();
+    this._updateDom();
   }
 
   _submit() {
@@ -152,7 +160,7 @@ class SunseekerScheduleCard extends HTMLElement {
       );
     }
     this._initCollapseState();
-    this._render();
+    this._updateDom();
   }
 
   _getLang() {
@@ -167,7 +175,7 @@ class SunseekerScheduleCard extends HTMLElement {
     return TRANSLATIONS[lang]?.[key] || TRANSLATIONS["en"][key];
   }
 
-  _render() {
+  _updateDom() {
     if (!this.shadowRoot) return;
     const days = [
       "monday", "tuesday", "wednesday", "thursday",
@@ -357,20 +365,26 @@ class SunseekerScheduleCard extends HTMLElement {
                                 type="checkbox"
                                 ${schedule[day]?.[idx]?.enabled ? "checked" : ""}
                                 ${disabled}
-                                onchange="this.getRootNode().host._handleInput('${day}', ${idx}, 'enabled', event)"
+                                data-day="${day}"
+                                data-idx="${idx}"
+                                data-field="enabled"
                               /> ${this._t("enabled")}
                             </label>
                             <input
                               type="time"
                               value="${schedule[day]?.[idx]?.starttime || "00:00"}"
                               ${disabled}
-                              oninput="this.getRootNode().host._handleInput('${day}', ${idx}, 'starttime', event)"
+                              data-day="${day}"
+                              data-idx="${idx}"
+                              data-field="starttime"
                             />
                             <input
                               type="time"
                               value="${schedule[day]?.[idx]?.endtime || "00:00"}"
                               ${disabled}
-                              oninput="this.getRootNode().host._handleInput('${day}', ${idx}, 'endtime', event)"
+                              data-day="${day}"
+                              data-idx="${idx}"
+                              data-field="endtime"
                             />
                           </div>
                           <div class="location-buttons">
@@ -380,7 +394,9 @@ class SunseekerScheduleCard extends HTMLElement {
                                   type="button"
                                   class="location-btn${schedule[day]?.[idx]?.locations?.includes(loc) ? " selected" : ""}"
                                   ${disabled}
-                                  onclick="this.getRootNode().host._toggleLocation('${day}', ${idx}, '${loc}')"
+                                  data-day="${day}"
+                                  data-idx="${idx}"
+                                  data-loc="${loc}"
                                 >${loc}</button>
                               `
       ).join("")}
@@ -412,35 +428,98 @@ class SunseekerScheduleCard extends HTMLElement {
     if (showHeader) {
       const headerEl = this.shadowRoot.getElementById("main-header");
       if (headerEl) {
-        headerEl.onclick = () => {
+        headerEl.addEventListener("click", () => {
           this._collapsedHeader = !this._collapsedHeader;
-          this._render();
-        };
+          this._updateDom();
+        });
       }
     }
 
     // Attach event handlers for boolean buttons
     if (this._editMode) {
-      this.shadowRoot.getElementById("recommended-btn").onclick = () => this._toggleBoolean("recommended_time_work");
-      this.shadowRoot.getElementById("userdefined-btn").onclick = () => this._toggleBoolean("user_defined");
-      this.shadowRoot.getElementById("pause-btn").onclick = () => this._toggleBoolean("pause");
+      this.shadowRoot.getElementById("recommended-btn").addEventListener("click", () => this._toggleBoolean("recommended_time_work"));
+      this.shadowRoot.getElementById("userdefined-btn").addEventListener("click", () => this._toggleBoolean("user_defined"));
+      this.shadowRoot.getElementById("pause-btn").addEventListener("click", () => this._toggleBoolean("pause"));
     }
 
     // Attach event handlers for collapse toggles
     days.forEach(day => {
       const dayLabel = this.shadowRoot.querySelector(`.day-label[data-day="${day}"]`);
       if (dayLabel) {
-        dayLabel.onclick = () => this._toggleDayCollapse(day);
+        dayLabel.addEventListener("click", () => this._toggleDayCollapse(day));
       }
     });
-    this.shadowRoot.querySelectorAll('.entry-headline').forEach(el => {
-      el.onclick = () => this._toggleEntryCollapse(el.dataset.day, Number(el.dataset.idx));
-    });
-    if (this._editMode) {
-      this.shadowRoot.querySelector(".submit-btn").onclick = () => this._submit();
-      this.shadowRoot.querySelector(".cancel-btn").onclick = () => this._cancelEdit();
-    } else {
-      this.shadowRoot.querySelector(".edit-btn").onclick = () => this._enterEditMode();
+    // Use event delegation for entry-headline clicks
+    const cardBody = this.shadowRoot.getElementById("card-body");
+    if (cardBody) {
+      cardBody.addEventListener("click", (event) => {
+        const el = event.target.closest('.entry-headline');
+        if (el && cardBody.contains(el)) {
+          this._toggleEntryCollapse(el.dataset.day, Number(el.dataset.idx));
+        }
+      });
+    }
+    // Delegate all event types to cardBody
+    if (cardBody) {
+      cardBody.addEventListener("click", (event) => {
+        // Entry collapse
+        const entryHeadline = event.target.closest('.entry-headline');
+        if (entryHeadline && cardBody.contains(entryHeadline)) {
+          this._toggleEntryCollapse(entryHeadline.dataset.day, Number(entryHeadline.dataset.idx));
+          return;
+        }
+        // Day collapse
+        const dayLabel = event.target.closest('.day-label[data-day]');
+        if (dayLabel && cardBody.contains(dayLabel)) {
+          this._toggleDayCollapse(dayLabel.dataset.day);
+          return;
+        }
+        // Location button
+        const locBtn = event.target.closest('button.location-btn[data-day][data-idx][data-loc]');
+        if (locBtn && cardBody.contains(locBtn)) {
+          this._toggleLocation(locBtn.dataset.day, Number(locBtn.dataset.idx), locBtn.dataset.loc);
+          return;
+        }
+        // Edit/submit/cancel buttons
+        if (event.target.classList.contains("edit-btn")) {
+          this._enterEditMode();
+          return;
+        }
+        if (event.target.classList.contains("submit-btn")) {
+          this._submit();
+          return;
+        }
+        if (event.target.classList.contains("cancel-btn")) {
+          this._cancelEdit();
+          return;
+        }
+        // Boolean buttons
+        if (event.target.id === "recommended-btn") {
+          this._toggleBoolean("recommended_time_work");
+          return;
+        }
+        if (event.target.id === "userdefined-btn") {
+          this._toggleBoolean("user_defined");
+          return;
+        }
+        if (event.target.id === "pause-btn") {
+          this._toggleBoolean("pause");
+          return;
+        }
+      });
+
+      cardBody.addEventListener("change", (event) => {
+        const input = event.target.closest('input[data-day][data-idx][data-field]');
+        if (input && cardBody.contains(input) && input.type === "checkbox") {
+          this._handleInput(input.dataset.day, Number(input.dataset.idx), input.dataset.field, event);
+        }
+      });
+      cardBody.addEventListener("input", (event) => {
+        const input = event.target.closest('input[data-day][data-idx][data-field]');
+        if (input && cardBody.contains(input) && input.type !== "checkbox") {
+          this._handleInput(input.dataset.day, Number(input.dataset.idx), input.dataset.field, event);
+        }
+      });
     }
   }
 }
