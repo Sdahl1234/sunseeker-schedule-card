@@ -435,30 +435,8 @@ class SunseekerScheduleCard extends HTMLElement {
       }
     }
 
-    // Attach event handlers for boolean buttons
-    if (this._editMode) {
-      this.shadowRoot.getElementById("recommended-btn").addEventListener("click", () => this._toggleBoolean("recommended_time_work"));
-      this.shadowRoot.getElementById("userdefined-btn").addEventListener("click", () => this._toggleBoolean("user_defined"));
-      this.shadowRoot.getElementById("pause-btn").addEventListener("click", () => this._toggleBoolean("pause"));
-    }
-
-    // Attach event handlers for collapse toggles
-    days.forEach(day => {
-      const dayLabel = this.shadowRoot.querySelector(`.day-label[data-day="${day}"]`);
-      if (dayLabel) {
-        dayLabel.addEventListener("click", () => this._toggleDayCollapse(day));
-      }
-    });
     // Use event delegation for entry-headline clicks
     const cardBody = this.shadowRoot.getElementById("card-body");
-    if (cardBody) {
-      cardBody.addEventListener("click", (event) => {
-        const el = event.target.closest('.entry-headline');
-        if (el && cardBody.contains(el)) {
-          this._toggleEntryCollapse(el.dataset.day, Number(el.dataset.idx));
-        }
-      });
-    }
     // Delegate all event types to cardBody
     if (cardBody) {
       cardBody.addEventListener("click", (event) => {
@@ -588,7 +566,7 @@ class SunseekerScheduleCardEditor extends HTMLElement {
         </label>
         <br />
         <br />
-        Version 1.0.4
+        Version 1.0.5
       </div>
     `;
 
