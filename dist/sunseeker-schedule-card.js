@@ -566,7 +566,7 @@ class SunseekerScheduleCardEditor extends HTMLElement {
         </label>
         <br />
         <br />
-        Version 1.0.6
+        Version 1.0.7
       </div>
     `;
 
