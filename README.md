@@ -1,5 +1,7 @@
 # sunseeker-schedule-card
 
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/hacs/integration)
+
 A custom Lovelace card for the [Sunseeker](https://www.home-assistant.io/integrations/sunseeker/) integration that lets you view and edit the robot mower's weekly mowing schedule directly from your dashboard.
 
 <img width="510" height="792" alt="image" src="https://github.com/user-attachments/assets/2fa0d209-f491-46c6-b5da-385e2a443b37" />
@@ -14,7 +16,7 @@ A custom Lovelace card for the [Sunseeker](https://www.home-assistant.io/integra
 - **View / Edit modes** — in view mode all controls are read-only, showing the live schedule from the mower. Pressing *Edit* unlocks all controls and buffers changes locally. *Submit* sends the updated schedule to the mower via the `sunseeker.set_schedule` service; *Cancel* discards all pending changes.
 - **Smart collapse** — individual day sections and entry slots can be expanded or collapsed. Disabled entries start collapsed automatically. The card header can also be collapsed. A `collapsed_header` config option controls the default state.
 - **Change-detection** — the card only re-renders when the schedule actually changes, preventing unnecessary DOM churn.
-- **Localised UI** — all labels and button text are translated for English, Danish, German, and French, following the user's Home Assistant language setting.
+- **Localised UI** — all labels and button text are translated for English, Danish, Finnish, French, German, and Polish, following the user's Home Assistant language setting.
 - **Visual editor** — full support for the Lovelace UI editor; no YAML required.
 
 ---
@@ -27,6 +29,15 @@ A custom Lovelace card for the [Sunseeker](https://www.home-assistant.io/integra
 ---
 
 ## Installation
+
+### HACS (recommended)
+
+1. Open **HACS** in your Home Assistant instance.
+2. Go to **Frontend** and click **+ Explore & Download Repositories**.
+3. Search for **Sunseeker Schedule Card** and click **Download**.
+4. Reload your browser or the Lovelace resources.
+
+### Manual
 
 1. Copy `sunseeker-schedule-card.js` into your `/config/www/sunseeker-schedule-card/` directory (or any subfolder of `www/`).
 2. Add the resource in **Settings → Dashboards → Resources**:
@@ -68,5 +79,6 @@ collapsed_header: false
 
 | Version | Notes |
 |---|---|
-| 1.0.7 | Current release |
+| 1.0.8 | Added Finnish and Polish language support |
+| 1.0.7 | Previous release |
 

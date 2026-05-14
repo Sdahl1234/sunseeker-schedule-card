@@ -566,7 +566,7 @@ class SunseekerScheduleCardEditor extends HTMLElement {
         </label>
         <br />
         <br />
-        Version 1.0.7
+        Version 1.0.8
       </div>
     `;
 
@@ -715,6 +715,48 @@ const TRANSLATIONS = {
       friday: "Vendredi",
       saturday: "Samedi",
       sunday: "Dimanche",
+    }
+  },
+  fi: {
+    header: "Sunseeker aikataulu",
+    enabled: "Käytössä",
+    edit: "Muokkaa",
+    submit: "Tallenna",
+    cancel: "Peruuta",
+    notification: "Aikataulu tallennettu!",
+    entry: "Jakso",
+    recommended_time_work: "Suositeltu",
+    user_defined: "Käyttäjän määrittämä",
+    pause: "Tauko",
+    days: {
+      monday: "Maanantai",
+      tuesday: "Tiistai",
+      wednesday: "Keskiviikko",
+      thursday: "Torstai",
+      friday: "Perjantai",
+      saturday: "Lauantai",
+      sunday: "Sunnuntai",
+    }
+  },
+  pl: {
+    header: "Harmonogram Sunseeker",
+    enabled: "Włączony",
+    edit: "Edytuj",
+    submit: "Zapisz",
+    cancel: "Anuluj",
+    notification: "Harmonogram zapisany!",
+    entry: "Okres",
+    recommended_time_work: "Zalecany",
+    user_defined: "Zdefiniowany przez użytkownika",
+    pause: "Pauza",
+    days: {
+      monday: "Poniedziałek",
+      tuesday: "Wtorek",
+      wednesday: "Środa",
+      thursday: "Czwartek",
+      friday: "Piątek",
+      saturday: "Sobota",
+      sunday: "Niedziela",
     }
   }
 };
