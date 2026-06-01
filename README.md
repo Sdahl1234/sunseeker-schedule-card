@@ -61,6 +61,7 @@ A custom Lovelace card for the [Sunseeker](https://www.home-assistant.io/integra
 | `header` | `string` | `"Sunseeker Schedule"` | Card header title (localised default used when omitted). |
 | `show_header` | `boolean` | `true` | Show or hide the card header. |
 | `collapsed_header` | `boolean` | `false` | Start with the card body collapsed. The header remains visible and clickable to expand. |
+| `buttons_position` | `string` | `"bottom"` | Position of the Edit / Submit / Cancel buttons. Options: `bottom`, `top`, `both`. |
 
 ### Minimal YAML example
 
@@ -96,6 +97,7 @@ collapsed_header: false
 
 | Version | Notes |
 |---|---|
+| 1.1.0 | Added `buttons_position` config option (top / bottom / top and bottom); fixed header padding so top and bottom spacing are balanced |
 | 1.0.9 | Added support for old wired models (single slot per day, border trim toggle, automatic layout detection); added Schedule active toggle for old wired models via `schedule_switch` config option |
 | 1.0.8 | Added Finnish and Polish language support |
 | 1.0.7 | Previous release |

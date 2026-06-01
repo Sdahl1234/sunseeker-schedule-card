@@ -31,6 +31,7 @@ class SunseekerScheduleCard extends HTMLElement {
     this._entity = config.entity;
     this._scheduleSwitch = config.schedule_switch || null;
     this._collapsedHeader = config.collapsed_header ?? false;
+    this._buttonsPosition = config.buttons_position || "bottom";
     this._initCollapseState();
     this._updateDom();
   }
@@ -229,6 +230,16 @@ class SunseekerScheduleCard extends HTMLElement {
       : null;
     const showHeader = this.config?.show_header !== false;
     const header = this.config?.show_header === false ? "" : (this.config?.header || this._t("header"));
+    const buttonsPosition = this._buttonsPosition || "bottom";
+    const _buttonRow = (pos) => `
+      <div class="button-row${pos === "top" ? " top" : ""}">
+        ${
+          this._editMode
+            ? `<button class="submit-btn" type="button">${this._t("submit")}</button>
+               <button class="cancel-btn" type="button">${this._t("cancel")}</button>`
+            : `<button class="edit-btn" type="button">${this._t("edit")}</button>`
+        }
+      </div>`;
 
     // Add collapsed state for header if not set
     if (this._collapsedHeader === undefined) {
@@ -242,7 +253,8 @@ class SunseekerScheduleCard extends HTMLElement {
           text-align: center;
           font-size: 1.3em;
           font-weight: bold;
-          margin-bottom: 4px;
+          padding: 12px 16px 8px 16px;
+          margin-bottom: 0;
           cursor: pointer;
           user-select: none;
           display: flex;
@@ -352,7 +364,12 @@ class SunseekerScheduleCard extends HTMLElement {
         }
         .button-row {
           margin-top: 16px;
+          margin-bottom: 0;
           text-align: center;
+        }
+        .button-row.top {
+          margin-top: 0;
+          margin-bottom: 12px;
         }
         .collapsed > .entry-content {
           display: none;
@@ -366,7 +383,8 @@ class SunseekerScheduleCard extends HTMLElement {
           </div>
         ` : ""}
         <div id="card-body" style="${this._collapsedHeader ? "display:none;" : ""}">
-          <div style="padding: 16px;">
+          <div style="padding: ${buttonsPosition === "top" || buttonsPosition === "both" ? "4px 16px 16px 16px" : "16px"};">
+            ${buttonsPosition === "top" || buttonsPosition === "both" ? _buttonRow("top") : ""}
             ${isOldModel && this._scheduleSwitch ? `
             <div class="bool-buttons">
               <button
@@ -509,17 +527,7 @@ class SunseekerScheduleCard extends HTMLElement {
                 </div>
               `
     ).join("")}
-            <div class="button-row">
-              ${this._editMode
-        ? `
-                  <button class="submit-btn" type="button">${this._t("submit")}</button>
-                  <button class="cancel-btn" type="button">${this._t("cancel")}</button>
-                `
-        : `
-                  <button class="edit-btn" type="button">${this._t("edit")}</button>
-                `
-      }
-            </div>
+            ${buttonsPosition === "bottom" || buttonsPosition === "both" ? _buttonRow("bottom") : ""}
           </div>
         </div>
       </ha-card>
@@ -687,11 +695,18 @@ class SunseekerScheduleCardEditor extends HTMLElement {
           Header collapsed by default
         </label>
         <br />
+        <label>Buttons position</label>
+        <select data-config-value="buttons_position">
+          <option value="bottom" ${(this._config?.buttons_position || "bottom") === "bottom" ? "selected" : ""}>Bottom</option>
+          <option value="top" ${this._config?.buttons_position === "top" ? "selected" : ""}>Top</option>
+          <option value="both" ${this._config?.buttons_position === "both" ? "selected" : ""}>Top and bottom</option>
+        </select>
+        <br />
         <label>Schedule switch (old model only)</label>
         <span id="switch-picker-container"></span>
         <br />
         <br />
-        Version 1.0.9
+        Version 1.1.0
       </div>
     `;
 
@@ -743,8 +758,8 @@ class SunseekerScheduleCardEditor extends HTMLElement {
     });
     this.querySelector("#switch-picker-container").appendChild(switchPicker);
 
-    // Attach change handlers for other inputs
-    this.querySelectorAll("input").forEach((el) => {
+    // Attach change handlers for other inputs and selects
+    this.querySelectorAll("input, select").forEach((el) => {
       el.onchange = (ev) => {
         const target = ev.target;
         let value;
