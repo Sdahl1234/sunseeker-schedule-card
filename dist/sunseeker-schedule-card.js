@@ -29,6 +29,7 @@ class SunseekerScheduleCard extends HTMLElement {
   setConfig(config) {
     this.config = config;
     this._entity = config.entity;
+    this._scheduleSwitch = config.schedule_switch || null;
     this._collapsedHeader = config.collapsed_header ?? false;
     this._initCollapseState();
     this._updateDom();
@@ -138,6 +139,14 @@ class SunseekerScheduleCard extends HTMLElement {
     this._updateDom();
   }
 
+  _toggleScheduleActive() {
+    if (!this._scheduleSwitch) return;
+    const isOn = this._hass?.states[this._scheduleSwitch]?.state === "on";
+    this._hass.callService("switch", isOn ? "turn_off" : "turn_on", {
+      entity_id: this._scheduleSwitch,
+    });
+  }
+
   _toggleBoolean(key) {
     if (!this._editMode) return;
     if (key === "pause") {
@@ -215,6 +224,9 @@ class SunseekerScheduleCard extends HTMLElement {
     const isOldModel = schedule?.model_type === "old";
     const locations = schedule?.locations || [];
     const disabled = this._editMode ? "" : "disabled";
+    const scheduleActive = (isOldModel && this._scheduleSwitch)
+      ? this._hass?.states[this._scheduleSwitch]?.state === "on"
+      : null;
     const showHeader = this.config?.show_header !== false;
     const header = this.config?.show_header === false ? "" : (this.config?.header || this._t("header"));
 
@@ -355,6 +367,15 @@ class SunseekerScheduleCard extends HTMLElement {
         ` : ""}
         <div id="card-body" style="${this._collapsedHeader ? "display:none;" : ""}">
           <div style="padding: 16px;">
+            ${isOldModel && this._scheduleSwitch ? `
+            <div class="bool-buttons">
+              <button
+                type="button"
+                class="bool-btn${scheduleActive ? " selected" : ""}"
+                id="schedule-active-btn"
+              >${this._t("schedule_active")}</button>
+            </div>
+            ` : ""}
             ${isOldModel ? "" : `
             <div class="bool-buttons">
               <button
@@ -557,6 +578,11 @@ class SunseekerScheduleCard extends HTMLElement {
           this._cancelEdit();
           return;
         }
+        // Schedule active toggle (old model)
+        if (event.target.id === "schedule-active-btn") {
+          this._toggleScheduleActive();
+          return;
+        }
         // Boolean buttons
         if (event.target.id === "recommended-btn") {
           this._toggleBoolean("recommended_time_work");
@@ -661,6 +687,9 @@ class SunseekerScheduleCardEditor extends HTMLElement {
           Header collapsed by default
         </label>
         <br />
+        <label>Schedule switch (old model only)</label>
+        <span id="switch-picker-container"></span>
+        <br />
         <br />
         Version 1.0.9
       </div>
@@ -690,6 +719,29 @@ class SunseekerScheduleCardEditor extends HTMLElement {
       );
     });
     this.querySelector("#picker-container").appendChild(picker);
+
+    // Schedule switch picker (old model)
+    const switchPicker = document.createElement("ha-entity-picker");
+    switchPicker.hass = this._hass;
+    switchPicker.value = this._config?.schedule_switch || "";
+    switchPicker.setAttribute("data-config-value", "schedule_switch");
+    switchPicker.setAttribute("domain-filter", "switch");
+    switchPicker.setAttribute("include-domains", "switch");
+    switchPicker.includeDomains = ["switch"];
+    switchPicker.addEventListener("value-changed", (ev) => {
+      this._config = {
+        ...this._config,
+        schedule_switch: ev.detail.value || null,
+      };
+      this.dispatchEvent(
+        new CustomEvent("config-changed", {
+          detail: { config: this._config },
+          bubbles: true,
+          composed: true,
+        })
+      );
+    });
+    this.querySelector("#switch-picker-container").appendChild(switchPicker);
 
     // Attach change handlers for other inputs
     this.querySelectorAll("input").forEach((el) => {
@@ -741,6 +793,7 @@ const TRANSLATIONS = {
     user_defined: "User defined",
     pause: "Pause",
     trim: "Border trim",
+    schedule_active: "Schedule active",
     days: {
       monday: "Monday",
       tuesday: "Tuesday",
@@ -763,6 +816,7 @@ const TRANSLATIONS = {
     user_defined: "Brugerdefineret",
     pause: "Pause",
     trim: "Kanttrimning",
+    schedule_active: "Tidsplan aktiv",
     days: {
       monday: "Mandag",
       tuesday: "Tirsdag",
@@ -785,6 +839,7 @@ const TRANSLATIONS = {
     user_defined: "Benutzerdefiniert",
     pause: "Pause",
     trim: "Randmähen",
+    schedule_active: "Zeitplan aktiv",
     days: {
       monday: "Montag",
       tuesday: "Dienstag",
@@ -807,6 +862,7 @@ const TRANSLATIONS = {
     user_defined: "Défini par l'utilisateur",
     pause: "Pause",
     trim: "Bordure",
+    schedule_active: "Programme actif",
     days: {
       monday: "Lundi",
       tuesday: "Mardi",
@@ -829,6 +885,7 @@ const TRANSLATIONS = {
     user_defined: "Käyttäjän määrittämä",
     pause: "Tauko",
     trim: "Reunaleikkaus",
+    schedule_active: "Aikataulu aktiivinen",
     days: {
       monday: "Maanantai",
       tuesday: "Tiistai",
@@ -851,6 +908,7 @@ const TRANSLATIONS = {
     user_defined: "Zdefiniowany przez użytkownika",
     pause: "Pauza",
     trim: "Przycinanie krawędzi",
+    schedule_active: "Harmonogram aktywny",
     days: {
       monday: "Poniedziałek",
       tuesday: "Wtorek",

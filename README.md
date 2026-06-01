@@ -11,6 +11,7 @@ A custom Lovelace card for the [Sunseeker](https://www.home-assistant.io/integra
 ## Features
 
 - **Old wired model support** — the card automatically detects old wired models and switches to a simplified one-slot-per-day layout with an enabled toggle, start/end time pickers, and a border-trim toggle. The Recommended / User defined / Pause mode buttons are hidden as they are not applicable.
+- **Schedule active toggle** — for old wired models, an optional *Schedule active* button at the top of the card mirrors the mower's "Schedule active" switch. Clicking it immediately turns the schedule on or off: turning it off clears the schedule on the server while keeping the times stored locally; turning it back on restores the stored schedule to the server. Requires the `schedule_switch` config option to be set *(old wired models)*.
 - **Full weekly schedule** — displays all seven days (Monday – Sunday), each collapsible, with up to two mowing time-slots (entries) per day *(wireless models)*.
 - **Per-entry controls** — each slot shows an enabled/disabled toggle, a start time picker, an end time picker, and a set of zone location buttons to select which zones are active during that slot *(wireless models)*.
 - **Schedule-mode selector** — three mutually exclusive top-level mode buttons let you switch between *Recommended*, *User defined*, and *Pause* without leaving the card *(wireless models)*.
@@ -28,6 +29,7 @@ A custom Lovelace card for the [Sunseeker](https://www.home-assistant.io/integra
 - A sensor entity whose `schedule` attribute contains the weekly schedule object (e.g. `sensor.sunseeker_schedule`).
   - **Wireless models (V, V1, X, S):** use the dedicated `Schedule` sensor created by the integration.
   - **Old wired models:** use the `Schedule` sensor. The integration automatically includes a `model_type: "old"` field in the schedule attribute, which the card uses to switch to the simplified layout.
+- To use the **Schedule active** toggle on old wired models, you also need the `Schedule active` switch entity created by the integration (e.g. `switch.sunseeker_schedule_active`). Pass it via the `schedule_switch` config option.
 
 ---
 
@@ -55,6 +57,7 @@ A custom Lovelace card for the [Sunseeker](https://www.home-assistant.io/integra
 | Key | Type | Default | Description |
 |---|---|---|---|
 | `entity` | `string` | **required** | Entity ID of the Sunseeker schedule sensor (e.g. `sensor.sunseeker_schedule`). |
+| `schedule_switch` | `string` | `null` | Entity ID of the Sunseeker *Schedule active* switch (e.g. `switch.sunseeker_schedule_active`). When set, a toggle button is shown for old wired models that turns the schedule on/off directly. |
 | `header` | `string` | `"Sunseeker Schedule"` | Card header title (localised default used when omitted). |
 | `show_header` | `boolean` | `true` | Show or hide the card header. |
 | `collapsed_header` | `boolean` | `false` | Start with the card body collapsed. The header remains visible and clickable to expand. |
@@ -66,7 +69,18 @@ type: custom:sunseeker-schedule-card
 entity: sensor.sunseeker_schedule
 ```
 
-### Full YAML example
+### Full YAML example (old wired model)
+
+```yaml
+type: custom:sunseeker-schedule-card
+entity: sensor.sunseeker_schedule
+schedule_switch: switch.sunseeker_schedule_active
+header: Mowing Schedule
+show_header: true
+collapsed_header: false
+```
+
+### Full YAML example (wireless model)
 
 ```yaml
 type: custom:sunseeker-schedule-card
@@ -82,7 +96,7 @@ collapsed_header: false
 
 | Version | Notes |
 |---|---|
-| 1.0.9 | Added support for old wired models (single slot per day, border trim toggle, automatic layout detection) |
+| 1.0.9 | Added support for old wired models (single slot per day, border trim toggle, automatic layout detection); added Schedule active toggle for old wired models via `schedule_switch` config option |
 | 1.0.8 | Added Finnish and Polish language support |
 | 1.0.7 | Previous release |
 
