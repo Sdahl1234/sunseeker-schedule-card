@@ -57,22 +57,36 @@ class SunseekerScheduleCard extends HTMLElement {
     return 8;
   }
 
+  _isOldModel() {
+    const schedule = this._editMode ? this._localSchedule : this._schedule;
+    return schedule?.model_type === "old";
+  }
+
   _initCollapseState() {
     const days = [
       "monday", "tuesday", "wednesday", "thursday",
       "friday", "saturday", "sunday"
     ];
-    for (const day of days) {
-      if (!(day in this._collapsedDays)) {
-        this._collapsedDays[day] = false;
+    const schedule = this._editMode ? this._localSchedule : this._schedule;
+    if (schedule?.model_type === "old") {
+      for (const day of days) {
+        if (!(day in this._collapsedDays)) {
+          this._collapsedDays[day] = false;
+        }
+        this._collapsedEntries[day] = [false];
       }
-      if (!this._collapsedEntries[day]) {
-        this._collapsedEntries[day] = [true, true];
-      }
-      const schedule = this._editMode ? this._localSchedule : this._schedule;
-      for (let idx = 0; idx < 2; idx++) {
-        const enabled = schedule?.[day]?.[idx]?.enabled;
-        this._collapsedEntries[day][idx] = !enabled;
+    } else {
+      for (const day of days) {
+        if (!(day in this._collapsedDays)) {
+          this._collapsedDays[day] = false;
+        }
+        if (!this._collapsedEntries[day]) {
+          this._collapsedEntries[day] = [true, true];
+        }
+        for (let idx = 0; idx < 2; idx++) {
+          const enabled = schedule?.[day]?.[idx]?.enabled;
+          this._collapsedEntries[day][idx] = !enabled;
+        }
       }
     }
   }
@@ -105,6 +119,22 @@ class SunseekerScheduleCard extends HTMLElement {
     } else {
       this._localSchedule[day][idx][field] = e.target.value;
     }
+    this._updateDom();
+  }
+
+  _handleOldModelInput(day, field, e) {
+    if (!this._editMode) return;
+    if (field === "enabled") {
+      this._localSchedule[day].enabled = e.target.checked;
+    } else {
+      this._localSchedule[day][field] = e.target.value;
+    }
+    this._updateDom();
+  }
+
+  _toggleOldTrim(day) {
+    if (!this._editMode) return;
+    this._localSchedule[day].trim = !this._localSchedule[day].trim;
     this._updateDom();
   }
 
@@ -182,6 +212,7 @@ class SunseekerScheduleCard extends HTMLElement {
       "friday", "saturday", "sunday"
     ];
     const schedule = this._editMode ? this._localSchedule : this._schedule;
+    const isOldModel = schedule?.model_type === "old";
     const locations = schedule?.locations || [];
     const disabled = this._editMode ? "" : "disabled";
     const showHeader = this.config?.show_header !== false;
@@ -324,6 +355,7 @@ class SunseekerScheduleCard extends HTMLElement {
         ` : ""}
         <div id="card-body" style="${this._collapsedHeader ? "display:none;" : ""}">
           <div style="padding: 16px;">
+            ${isOldModel ? "" : `
             <div class="bool-buttons">
               <button
                 type="button"
@@ -344,8 +376,56 @@ class SunseekerScheduleCard extends HTMLElement {
                 id="pause-btn"
               >${this._t("pause")}</button>
             </div>
+            `}
             ${days.map(
-      (day) => `
+      (day) => isOldModel ? `
+                <div class="day-block${this._collapsedDays[day] ? " collapsed" : ""}">
+                  <span class="day-label" data-day="${day}">
+                    ${this._t("days", day)}
+                    <span class="collapse-arrow" style="transform: rotate(${this._collapsedDays[day] ? 0 : 90}deg);">&#9654;</span>
+                  </span>
+                  <div class="entry-content">
+                    <div class="entry-details">
+                      <div class="entry-row">
+                        <label>
+                          <input
+                            type="checkbox"
+                            ${schedule[day]?.enabled ? "checked" : ""}
+                            ${disabled}
+                            data-day="${day}"
+                            data-field="enabled"
+                            data-oldmodel="true"
+                          /> ${this._t("enabled")}
+                        </label>
+                        <input
+                          type="time"
+                          value="${schedule[day]?.starttime || "00:00"}"
+                          ${disabled}
+                          data-day="${day}"
+                          data-field="starttime"
+                          data-oldmodel="true"
+                        />
+                        <input
+                          type="time"
+                          value="${schedule[day]?.endtime || "00:00"}"
+                          ${disabled}
+                          data-day="${day}"
+                          data-field="endtime"
+                          data-oldmodel="true"
+                        />
+                      </div>
+                      <div class="location-buttons">
+                        <button
+                          type="button"
+                          class="location-btn${schedule[day]?.trim ? " selected" : ""}"
+                          ${disabled}
+                          data-oldmodel-trim="${day}"
+                        >${this._t("trim")}</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ` : `
                 <div class="day-block${this._collapsedDays[day] ? " collapsed" : ""}">
                   <span class="day-label" data-day="${day}">
                     ${this._t("days", day)}
@@ -452,7 +532,13 @@ class SunseekerScheduleCard extends HTMLElement {
           this._toggleDayCollapse(dayLabel.dataset.day);
           return;
         }
-        // Location button
+        // Old model trim button
+        const trimBtn = event.target.closest('button[data-oldmodel-trim]');
+        if (trimBtn && cardBody.contains(trimBtn)) {
+          this._toggleOldTrim(trimBtn.dataset.oldmodelTrim);
+          return;
+        }
+        // Location button (new model)
         const locBtn = event.target.closest('button.location-btn[data-day][data-idx][data-loc]');
         if (locBtn && cardBody.contains(locBtn)) {
           this._toggleLocation(locBtn.dataset.day, Number(locBtn.dataset.idx), locBtn.dataset.loc);
@@ -487,15 +573,25 @@ class SunseekerScheduleCard extends HTMLElement {
       });
 
       cardBody.addEventListener("change", (event) => {
-        const input = event.target.closest('input[data-day][data-idx][data-field]');
+        const input = event.target.closest('input[data-oldmodel="true"]');
         if (input && cardBody.contains(input) && input.type === "checkbox") {
-          this._handleInput(input.dataset.day, Number(input.dataset.idx), input.dataset.field, event);
+          this._handleOldModelInput(input.dataset.day, input.dataset.field, event);
+          return;
+        }
+        const input2 = event.target.closest('input[data-day][data-idx][data-field]');
+        if (input2 && cardBody.contains(input2) && input2.type === "checkbox") {
+          this._handleInput(input2.dataset.day, Number(input2.dataset.idx), input2.dataset.field, event);
         }
       });
       cardBody.addEventListener("input", (event) => {
-        const input = event.target.closest('input[data-day][data-idx][data-field]');
+        const input = event.target.closest('input[data-oldmodel="true"]');
         if (input && cardBody.contains(input) && input.type !== "checkbox") {
-          this._handleInput(input.dataset.day, Number(input.dataset.idx), input.dataset.field, event);
+          this._handleOldModelInput(input.dataset.day, input.dataset.field, event);
+          return;
+        }
+        const input2 = event.target.closest('input[data-day][data-idx][data-field]');
+        if (input2 && cardBody.contains(input2) && input2.type !== "checkbox") {
+          this._handleInput(input2.dataset.day, Number(input2.dataset.idx), input2.dataset.field, event);
         }
       });
     }
@@ -566,7 +662,7 @@ class SunseekerScheduleCardEditor extends HTMLElement {
         </label>
         <br />
         <br />
-        Version 1.0.8
+        Version 1.0.9
       </div>
     `;
 
@@ -644,6 +740,7 @@ const TRANSLATIONS = {
     recommended_time_work: "Recommended",
     user_defined: "User defined",
     pause: "Pause",
+    trim: "Border trim",
     days: {
       monday: "Monday",
       tuesday: "Tuesday",
@@ -665,6 +762,7 @@ const TRANSLATIONS = {
     recommended_time_work: "Anbefalet",
     user_defined: "Brugerdefineret",
     pause: "Pause",
+    trim: "Kanttrimning",
     days: {
       monday: "Mandag",
       tuesday: "Tirsdag",
@@ -686,6 +784,7 @@ const TRANSLATIONS = {
     recommended_time_work: "Empfohlen",
     user_defined: "Benutzerdefiniert",
     pause: "Pause",
+    trim: "Randmähen",
     days: {
       monday: "Montag",
       tuesday: "Dienstag",
@@ -707,6 +806,7 @@ const TRANSLATIONS = {
     recommended_time_work: "Recommandé",
     user_defined: "Défini par l'utilisateur",
     pause: "Pause",
+    trim: "Bordure",
     days: {
       monday: "Lundi",
       tuesday: "Mardi",
@@ -728,6 +828,7 @@ const TRANSLATIONS = {
     recommended_time_work: "Suositeltu",
     user_defined: "Käyttäjän määrittämä",
     pause: "Tauko",
+    trim: "Reunaleikkaus",
     days: {
       monday: "Maanantai",
       tuesday: "Tiistai",
@@ -749,6 +850,7 @@ const TRANSLATIONS = {
     recommended_time_work: "Zalecany",
     user_defined: "Zdefiniowany przez użytkownika",
     pause: "Pauza",
+    trim: "Przycinanie krawędzi",
     days: {
       monday: "Poniedziałek",
       tuesday: "Wtorek",
