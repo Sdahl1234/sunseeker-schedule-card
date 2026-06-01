@@ -2,7 +2,7 @@
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/hacs/integration)
 
-A custom Lovelace card for the [Sunseeker](https://www.home-assistant.io/integrations/sunseeker/) integration that lets you view and edit the robot mower's weekly mowing schedule directly from your dashboard.
+A custom Lovelace card for the [Sunseeker](https://www.home-assistant.io/integrations/sunseeker/) integration that lets you view and edit the robot mower's weekly mowing schedule directly from your dashboard. Works with both **wireless models** (V, V1, X, S) and **old wired models**.
 
 <img width="510" height="792" alt="image" src="https://github.com/user-attachments/assets/2fa0d209-f491-46c6-b5da-385e2a443b37" />
 
@@ -10,9 +10,10 @@ A custom Lovelace card for the [Sunseeker](https://www.home-assistant.io/integra
 
 ## Features
 
-- **Full weekly schedule** — displays all seven days (Monday – Sunday), each collapsible, with up to two mowing time-slots (entries) per day.
-- **Per-entry controls** — each slot shows an enabled/disabled toggle, a start time picker, an end time picker, and a set of zone location buttons to select which zones are active during that slot.
-- **Schedule-mode selector** — three mutually exclusive top-level mode buttons let you switch between *Recommended*, *User defined*, and *Pause* without leaving the card.
+- **Old wired model support** — the card automatically detects old wired models and switches to a simplified one-slot-per-day layout with an enabled toggle, start/end time pickers, and a border-trim toggle. The Recommended / User defined / Pause mode buttons are hidden as they are not applicable.
+- **Full weekly schedule** — displays all seven days (Monday – Sunday), each collapsible, with up to two mowing time-slots (entries) per day *(wireless models)*.
+- **Per-entry controls** — each slot shows an enabled/disabled toggle, a start time picker, an end time picker, and a set of zone location buttons to select which zones are active during that slot *(wireless models)*.
+- **Schedule-mode selector** — three mutually exclusive top-level mode buttons let you switch between *Recommended*, *User defined*, and *Pause* without leaving the card *(wireless models)*.
 - **View / Edit modes** — in view mode all controls are read-only, showing the live schedule from the mower. Pressing *Edit* unlocks all controls and buffers changes locally. *Submit* sends the updated schedule to the mower via the `sunseeker.set_schedule` service; *Cancel* discards all pending changes.
 - **Smart collapse** — individual day sections and entry slots can be expanded or collapsed. Disabled entries start collapsed automatically. The card header can also be collapsed. A `collapsed_header` config option controls the default state.
 - **Change-detection** — the card only re-renders when the schedule actually changes, preventing unnecessary DOM churn.
@@ -25,6 +26,8 @@ A custom Lovelace card for the [Sunseeker](https://www.home-assistant.io/integra
 
 - Home Assistant with the **Sunseeker** integration configured.
 - A sensor entity whose `schedule` attribute contains the weekly schedule object (e.g. `sensor.sunseeker_schedule`).
+  - **Wireless models (V, V1, X, S):** use the dedicated `Schedule` sensor created by the integration.
+  - **Old wired models:** use the `Schedule` sensor. The integration automatically includes a `model_type: "old"` field in the schedule attribute, which the card uses to switch to the simplified layout.
 
 ---
 
@@ -79,6 +82,7 @@ collapsed_header: false
 
 | Version | Notes |
 |---|---|
+| 1.0.9 | Added support for old wired models (single slot per day, border trim toggle, automatic layout detection) |
 | 1.0.8 | Added Finnish and Polish language support |
 | 1.0.7 | Previous release |
 
