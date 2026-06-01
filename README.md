@@ -62,6 +62,7 @@ A custom Lovelace card for the [Sunseeker](https://www.home-assistant.io/integra
 | `show_header` | `boolean` | `true` | Show or hide the card header. |
 | `collapsed_header` | `boolean` | `false` | Start with the card body collapsed. The header remains visible and clickable to expand. |
 | `buttons_position` | `string` | `"bottom"` | Position of the Edit / Submit / Cancel buttons. Options: `bottom`, `top`, `both`. |
+| `buttons_after_schedule_active` | `boolean` | `false` | When `buttons_position` is `top` or `both`, place the buttons *after* the Schedule active toggle (old models) or after the Recommended / User defined / Pause buttons (wireless models) instead of before them. |
 
 ### Minimal YAML example
 
@@ -97,6 +98,7 @@ collapsed_header: false
 
 | Version | Notes |
 |---|---|
+| 1.1.1 | Added `buttons_after_schedule_active` option to place top buttons below the Schedule active / mode buttons instead of above them |
 | 1.1.0 | Added `buttons_position` config option (top / bottom / top and bottom); fixed header padding so top and bottom spacing are balanced |
 | 1.0.9 | Added support for old wired models (single slot per day, border trim toggle, automatic layout detection); added Schedule active toggle for old wired models via `schedule_switch` config option |
 | 1.0.8 | Added Finnish and Polish language support |

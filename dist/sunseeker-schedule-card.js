@@ -32,6 +32,7 @@ class SunseekerScheduleCard extends HTMLElement {
     this._scheduleSwitch = config.schedule_switch || null;
     this._collapsedHeader = config.collapsed_header ?? false;
     this._buttonsPosition = config.buttons_position || "bottom";
+    this._buttonsAfterScheduleActive = config.buttons_after_schedule_active ?? false;
     this._initCollapseState();
     this._updateDom();
   }
@@ -231,6 +232,8 @@ class SunseekerScheduleCard extends HTMLElement {
     const showHeader = this.config?.show_header !== false;
     const header = this.config?.show_header === false ? "" : (this.config?.header || this._t("header"));
     const buttonsPosition = this._buttonsPosition || "bottom";
+    const buttonsAfterScheduleActive = this._buttonsAfterScheduleActive ?? false;
+    const showTopButtons = buttonsPosition === "top" || buttonsPosition === "both";
     const _buttonRow = (pos) => `
       <div class="button-row${pos === "top" ? " top" : ""}">
         ${
@@ -383,8 +386,8 @@ class SunseekerScheduleCard extends HTMLElement {
           </div>
         ` : ""}
         <div id="card-body" style="${this._collapsedHeader ? "display:none;" : ""}">
-          <div style="padding: ${buttonsPosition === "top" || buttonsPosition === "both" ? "4px 16px 16px 16px" : "16px"};">
-            ${buttonsPosition === "top" || buttonsPosition === "both" ? _buttonRow("top") : ""}
+          <div style="padding: ${showTopButtons ? "4px 16px 16px 16px" : "16px"}">
+            ${showTopButtons && !buttonsAfterScheduleActive ? _buttonRow("top") : ""}
             ${isOldModel && this._scheduleSwitch ? `
             <div class="bool-buttons">
               <button
@@ -394,6 +397,7 @@ class SunseekerScheduleCard extends HTMLElement {
               >${this._t("schedule_active")}</button>
             </div>
             ` : ""}
+            ${showTopButtons && buttonsAfterScheduleActive && isOldModel ? _buttonRow("top") : ""}
             ${isOldModel ? "" : `
             <div class="bool-buttons">
               <button
@@ -415,6 +419,7 @@ class SunseekerScheduleCard extends HTMLElement {
                 id="pause-btn"
               >${this._t("pause")}</button>
             </div>
+            ${showTopButtons && buttonsAfterScheduleActive ? _buttonRow("top") : ""}
             `}
             ${days.map(
       (day) => isOldModel ? `
@@ -702,11 +707,20 @@ class SunseekerScheduleCardEditor extends HTMLElement {
           <option value="both" ${this._config?.buttons_position === "both" ? "selected" : ""}>Top and bottom</option>
         </select>
         <br />
+        <label>
+          <input
+            type="checkbox"
+            ${this._config?.buttons_after_schedule_active ? "checked" : ""}
+            data-config-value="buttons_after_schedule_active"
+          />
+          Buttons below Schedule active (when top/both)
+        </label>
+        <br />
         <label>Schedule switch (old model only)</label>
         <span id="switch-picker-container"></span>
         <br />
         <br />
-        Version 1.1.0
+        Version 1.1.1
       </div>
     `;
 
