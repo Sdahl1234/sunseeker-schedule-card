@@ -4,7 +4,13 @@
 
 A custom Lovelace card for the [Sunseeker](https://www.home-assistant.io/integrations/sunseeker/) integration that lets you view and edit the robot mower's weekly mowing schedule directly from your dashboard. Works with both **wireless models** (V, V1, X, S) and **old wired models**.
 
-<img width="510" height="792" alt="image" src="https://github.com/user-attachments/assets/2fa0d209-f491-46c6-b5da-385e2a443b37" />
+New models
+
+<img width="669" height="860" alt="image" src="https://github.com/user-attachments/assets/e5c56daa-4f28-441e-8a9d-c670768ea5bb" />
+
+Old models
+
+<img width="670" height="864" alt="image" src="https://github.com/user-attachments/assets/ab65aac9-6aab-40f1-82d1-26f2cac55eb6" />
 
 ---
 
